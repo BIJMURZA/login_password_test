@@ -1,35 +1,49 @@
-import React, {useEffect, useState} from 'react';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { NavigationContainer } from '@react-navigation/native';
-import { View, Button, TextInput, StyleSheet, Text } from 'react-native';
+import React, {useState} from 'react';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { View, Button, TextInput, StyleSheet} from 'react-native';
 
-
+const storeUser = async (User) => {
+    try {
+        await AsyncStorage.setItem("user", JSON.stringify(User))
+    } catch (error) {
+        console.log("Ошибка: ", error);
+    }
+}
 
 const LoginScreen = ({ onSuccess }) => {
     const [loginInput, setLogin] = useState('');
     const [passwordInput, setPassword] = useState(' ')
 
-    const authorization = () => {
-        fetch(`http://192.168.0.117:3000/accounts/login/password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                login: loginInput,
-                password: passwordInput
-            }),
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    onSuccess();
-                } else {
-                    alert('Неверный логин или пароль! \nПовторите попытку');
-                }
+    const authorization = async () => {
+        try {
+            fetch(`http://192.168.0.117:3000/accounts/login/password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    login: loginInput,
+                    password: passwordInput
+                }),
             })
-            .catch(err => {console.error('!Авторизация ERROR!', err);})
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        storeUser(data.success);
+                        onSuccess();
+                    } else {
+                        alert('Неверный логин или пароль! \nПовторите попытку');
+                    }
+                })
+                .catch(err => {
+                    console.error('!Авторизация ERROR!', err);
+                })
+        } catch (error) {
+            alert('Сервер не отвечает, повторите попытку позже!')
+        }
     }
+
+
 
     return (
         <>
